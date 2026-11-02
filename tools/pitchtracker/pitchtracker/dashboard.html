@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dunkelnacht-Radar</title>
+<style>
+:root{
+  --bg:#0d0f14; --panel:#151922; --panel2:#1b2030; --line:#262c3d; --text:#e6e8ee; --muted:#8a91a6;
+  --accent:#a78bfa; --accent2:#7c5cf0; --ok:#3fb27f; --warn:#e3a33b; --bad:#e5534b; --chf:#ff5c5c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:inherit}
+header{position:sticky;top:0;z-index:5;background:rgba(13,15,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:16px;padding:12px 24px;flex-wrap:wrap}
+h1{font-size:18px;margin:0;letter-spacing:.2px}
+h1 small{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)} .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
+.dot.pulse{background:var(--accent);animation:p 1s infinite alternate}@keyframes p{to{opacity:.3}}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:6px 12px}
+button.primary{background:var(--accent2);border-color:var(--accent2)}
+button:hover{filter:brightness(1.15)}
+main{display:grid;grid-template-columns:minmax(330px,420px) 1fr;gap:20px;padding:20px 24px;max-width:1500px;margin:0 auto}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+h2{font-size:14px;margin:0 0 10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.progress{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;margin:6px 0 4px}
+.progress div{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+.big{font-size:26px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:12px}
+.tile{position:relative;aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;
+  font-variant-numeric:tabular-nums;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer;user-select:none}
+.tile.owned{background:#11141c;color:#3b4157;border-color:#1a1e2a}
+.tile.missing{color:var(--text);border-color:#3a3460}
+.tile.secret.missing{border-color:var(--accent);box-shadow:inset 0 0 0 1px rgba(167,139,250,.25)}
+.tile.has{background:var(--accent2);border-color:var(--accent);color:#fff;font-weight:700}
+.tile .b{position:absolute;top:-5px;right:-5px;background:var(--chf);color:#fff;border-radius:999px;font-size:9px;min-width:15px;height:15px;
+  display:flex;align-items:center;justify-content:center;padding:0 3px;font-weight:700}
+.tile.sel{outline:2px solid var(--accent);outline-offset:1px}
+.editing .tile{cursor:copy}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+textarea{width:100%;min-height:70px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.chip{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer}
+.chip.on{background:#2a2150;border-color:var(--accent2);color:#fff}
+.hit{display:grid;grid-template-columns:88px 1fr auto;gap:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);margin-bottom:10px}
+.hit.new{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.hit.stale{opacity:.5}
+.hit img{width:88px;height:88px;object-fit:cover;border-radius:8px;background:#0b0d12}
+.hit .noimg{width:88px;height:88px;border-radius:8px;background:#0b0d12;display:flex;align-items:center;justify-content:center;color:#333a50;font-size:24px}
+.hit .t{font-weight:600;text-decoration:none}
+.hit .t:hover{text-decoration:underline}
+.cards{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.cc{font-size:12px;padding:2px 8px;border-radius:6px;background:#2a2150;color:#d9ccff;border:1px solid #3d2f78}
+.cc.SIR,.cc.MHR{background:#3a1f4f;border-color:#7b3fb0;color:#f2d9ff}
+.meta{font-size:12px;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.tag{font-size:11px;padding:1px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.tag.warn{color:var(--warn);border-color:#5a4520} .tag.good{color:var(--ok);border-color:#1f4d38} .tag.acc{color:var(--accent);border-color:#3d2f78}
+.src{font-size:11px;font-weight:700;padding:1px 7px;border-radius:4px}
+.src.kleinanzeigen{background:#1e3a1e;color:#9be39b} .src.tutti{background:#3d1d1d;color:#ffb0b0}
+.price{text-align:right;white-space:nowrap}
+.price .p{font-size:20px;font-weight:700}
+.price small{display:block;color:var(--muted)}
+.under{color:var(--ok)!important} .over{color:var(--warn)!important}
+.x{background:none;border:none;color:var(--muted);padding:2px 6px;margin-top:8px}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+details{margin-top:14px;color:var(--muted);font-size:12px}
+details pre{white-space:pre-wrap;margin:6px 0 0;font:11px ui-monospace,monospace}
+.hint{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Dunkelnacht-Radar <small>ME05 Pitch Black · Kleinanzeigen & tutti · live</small></h1>
+  <div class="spacer"></div>
+  <div id="status" class="row"></div>
+  <button class="primary" id="scanBtn">Jetzt scannen</button>
+</header>
+
+<main>
+  <div>
+    <section>
+      <h2>Sammlung</h2>
+      <div class="row" style="justify-content:space-between">
+        <div><span class="big" id="ownedN">–</span> <span class="hint">/ 120 · <b id="missN">–</b> fehlen</span></div>
+        <button id="editBtn">Bearbeiten</button>
+      </div>
+      <div class="progress"><div id="bar" style="width:0"></div></div>
+      <div class="grid" id="grid"></div>
+      <div class="legend">
+        <span><i style="background:var(--panel2);border:1px solid #3a3460"></i>fehlt</span>
+        <span><i style="background:#11141c"></i>vorhanden</span>
+        <span><i style="background:#2a2150"></i>Angebot gefunden</span>
+        <span><i style="border:1px solid var(--accent)"></i>Secret Rare</span>
+      </div>
+      <p class="hint" id="gridHint">Klick auf eine Karte filtert die Treffer.</p>
+      <div id="bulk" style="display:none;margin-top:10px">
+        <p class="hint">Im Bearbeiten-Modus schaltet ein Klick eine Karte zwischen <b>vorhanden</b> und <b>fehlt</b> um. Oder trag hier deine Liste ein (Nummern und Bereiche, z.&nbsp;B. <code>85-120, 48, 55</code>):</p>
+        <textarea id="bulkText" placeholder="z. B. 85-120, 48, 55"></textarea>
+        <div class="row" style="margin-top:6px">
+          <button id="saveMissing">Als FEHLENDE übernehmen</button>
+          <button id="saveOwned">Als VORHANDENE übernehmen</button>
+        </div>
+      </div>
+    </section>
+    <details>
+      <summary>Protokoll</summary>
+      <pre id="log"></pre>
+    </details>
+  </div>
+
+  <section>
+    <h2>Angebote für fehlende Karten</h2>
+    <div class="filters" id="filters">
+      <span class="chip on" data-f="src" data-v="all">Alle Quellen</span>
+      <span class="chip" data-f="src" data-v="kleinanzeigen">Kleinanzeigen</span>
+      <span class="chip" data-f="src" data-v="tutti">tutti</span>
+      <span style="width:10px"></span>
+      <span class="chip" data-f="low" data-v="1" title="Name ohne Set-Bezug oder mehrdeutige Variante">auch unsichere</span>
+      <span class="chip on" data-f="lots" data-v="1">Lots / Sammlungen</span>
+      <span class="chip" data-f="sort" data-v="price">günstigste zuerst</span>
+      <span class="spacer"></span>
+      <span class="hint" id="cardFilter"></span>
+    </div>
+    <div id="hits"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let S = null, editing = false, selCard = null, known = null;
+const F = {src:"all", low:false, lots:true, sort:"new"};
+
+function rel(iso){
+  if(!iso) return "–";
+  const d = (Date.now() - new Date(iso).getTime())/60000;
+  if (d < 1) return "gerade eben"; if (d < 60) return `vor ${Math.round(d)} min`;
+  if (d < 1440) return `vor ${Math.round(d/60)} h`; return `vor ${Math.round(d/1440)} T`;
+}
+const fmt = (v, cur) => v == null ? "VB" : (cur === "EUR" ? `${v.toLocaleString("de-CH",{maximumFractionDigits:2})} €` : `CHF ${v.toLocaleString("de-CH",{maximumFractionDigits:2})}`);
+
+async function load(){
+  try{
+    const r = await fetch("/api/state"); S = await r.json();
+    render(); notifyNew();
+  }catch(e){ $("#status").innerHTML = `<span class="pill"><span class="dot bad"></span>Server nicht erreichbar</span>`; }
+}
+
+function render(){
+  // Status
+  const st = Object.entries(S.status).map(([k,v]) =>
+    `<span class="pill" title="${esc(v.error)}"><span class="dot ${S.scanning?'pulse':v.ok===true?'ok':v.ok===false?'bad':''}"></span>${k==="kleinanzeigen"?"Kleinanzeigen":"tutti"} ${v.last?rel(v.last):""}${v.ok===false?" · Fehler":""}</span>`).join("");
+  const nxt = S.scanning ? "Scan läuft…" : S.next_scan ? `nächster Scan ${new Date(S.next_scan).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}` : "";
+  $("#status").innerHTML = st + `<span class="pill">${nxt}</span>`;
+
+  // Sammlung
+  const miss = S.total - S.owned;
+  $("#ownedN").textContent = S.owned; $("#missN").textContent = miss;
+  $("#bar").style.width = (S.owned / S.total * 100) + "%";
+  $("#grid").innerHTML = S.cards.map(c => {
+    const cls = ["tile", c.owned ? "owned" : "missing", c.secret ? "secret" : "", (!c.owned && c.hits) ? "has" : "", selCard===c.num ? "sel":""].join(" ");
+    const mk = c.market ? ` · Markt ≈ ${c.market.toFixed(2)} €` : "";
+    return `<div class="${cls}" data-n="${c.num}" title="#${c.code} ${esc(c.de)}${c.de!==c.en?" / "+esc(c.en):""} · ${c.rarity_label}${mk}">${c.num}${(!c.owned && c.hits)?`<span class="b">${c.hits}</span>`:""}</div>`;
+  }).join("");
+
+  // Treffer
+  let hits = S.hits.filter(h => h.missing_nums.length);
+  if (F.src !== "all") hits = hits.filter(h => h.source === F.src);
+  if (!F.low) hits = hits.filter(h => h.confidence !== "niedrig");
+  if (!F.lots) hits = hits.filter(h => !h.is_lot);
+  if (selCard) hits = hits.filter(h => h.missing_nums.includes(selCard));
+  if (F.sort === "price") hits.sort((a,b) => (a.price_chf ?? 1e9) - (b.price_chf ?? 1e9));
+  $("#cardFilter").innerHTML = selCard ? `Filter: #${selCard} ${esc(S.cards[selCard-1].de)} <a href="#" id="clr">×</a>` : `${hits.length} Angebote`;
+  if (selCard) $("#clr").onclick = e => { e.preventDefault(); selCard = null; render(); };
+
+  $("#hits").innerHTML = hits.length ? hits.map(h => {
+    const cards = h.missing_nums.map(n => { const c = S.cards[n-1]; return `<span class="cc ${c.rarity}">#${String(n).padStart(3,"0")} ${esc(c.de)} · ${c.rarity}</span>`; }).join("");
+    const tags = [
+      h.viewed ? "" : `<span class="tag acc">NEU</span>`,
+      h.confidence === "sicher" ? `<span class="tag good">Nummer erkannt</span>` : h.confidence === "mittel" ? `<span class="tag">Name + Set</span>` : `<span class="tag warn">unsicher</span>`,
+      h.ambiguous ? `<span class="tag warn">Variante unklar</span>` : "",
+      h.is_lot ? `<span class="tag warn">Lot/Sammlung</span>` : "",
+      h.graded ? `<span class="tag acc">${esc(h.graded)}</span>` : "",
+      h.language ? `<span class="tag">${h.language}</span>` : "",
+      h.price_drop ? `<span class="tag good">Preis gesenkt (vorher ${fmt(h.first_price,h.currency)})</span>` : "",
+      h.stale ? `<span class="tag">nicht mehr gesehen</span>` : "",
+    ].join("");
+    const conv = h.currency === "EUR" && h.price_chf != null ? `<small>≈ CHF ${h.price_chf.toFixed(0)}</small>` : "";
+    let mk = "";
+    if (h.market_chf) {
+      const cls = h.price_chf != null && h.price_chf <= h.market_chf ? "under" : "over";
+      mk = `<small class="${cls}">Markt ≈ CHF ${h.market_chf.toFixed(0)}</small>`;
+    }
+    const img = h.image ? `<img src="${esc(h.image)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=noimg>🂠</div>'">` : `<div class="noimg">🂠</div>`;
+    return `<div class="hit ${h.viewed?"":"new"} ${h.stale?"stale":""}">
+      <a href="${esc(h.url)}" target="_blank" rel="noopener">${img}</a>
+      <div>
+        <div class="cards">${cards}</div>
+        <a class="t" href="${esc(h.url)}" target="_blank" rel="noopener">${esc(h.title)}</a>
+        <div class="meta"><span class="src ${h.source}">${h.source==="tutti"?"tutti":"Kleinanzeigen"}</span>
+          <span>${esc(h.location)}</span><span>gefunden ${rel(h.first_seen)}</span></div>
+        <div class="meta">${tags}</div>
+      </div>
+      <div class="price"><div class="p">${esc(h.price_raw || fmt(h.price,h.currency))}</div>${conv}${mk}
+        <button class="x" data-hide="${esc(h.id)}" title="ausblenden">ausblenden ×</button></div>
+    </div>`;
+  }).join("") : `<div class="empty">${S.cycle ? "Noch keine Angebote für deine fehlenden Karten. Der Radar sucht weiter." : "Erster Scan läuft…"}</div>`;
+
+  $("#log").textContent = S.log.join("\n");
+}
+
+function notifyNew(){
+  const ids = new Set(S.hits.filter(h => h.missing_nums.length && h.confidence !== "niedrig").map(h => h.id));
+  if (known) {
+    const fresh = S.hits.filter(h => ids.has(h.id) && !known.has(h.id));
+    if (fresh.length && "Notification" in window && Notification.permission === "granted") {
+      fresh.slice(0,3).forEach(h => new Notification("Dunkelnacht: neues Angebot", {body: `${h.title} – ${h.price_raw}`}));
+    }
+  }
+  known = ids;
+  const n = S.hits.filter(h => !h.viewed && h.missing_nums.length && h.confidence !== "niedrig").length;
+  document.title = (n ? `(${n}) ` : "") + "Dunkelnacht-Radar";
+}
+
+$("#grid").addEventListener("click", async e => {
+  const t = e.target.closest(".tile"); if (!t) return;
+  const n = +t.dataset.n;
+  if (editing) {
+    const c = S.cards[n-1];
+    await fetch("/api/toggle", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({num:n, owned:!c.owned})});
+    load();
+  } else { selCard = selCard === n ? null : n; render(); }
+});
+$("#editBtn").onclick = () => {
+  editing = !editing;
+  $("#editBtn").textContent = editing ? "Fertig" : "Bearbeiten";
+  $("#bulk").style.display = editing ? "block" : "none";
+  $("#grid").classList.toggle("editing", editing);
+  $("#gridHint").textContent = editing ? "Bearbeiten: Klick = vorhanden ↔ fehlt" : "Klick auf eine Karte filtert die Treffer.";
+};
+async function bulk(mode){
+  await fetch("/api/collection", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({mode, text: $("#bulkText").value})});
+  $("#bulkText").value = ""; load();
+}
+$("#saveMissing").onclick = () => bulk("missing");
+$("#saveOwned").onclick = () => bulk("owned");
+$("#scanBtn").onclick = async () => { await fetch("/api/scan", {method:"POST"}); setTimeout(load, 800); };
+$("#hits").addEventListener("click", async e => {
+  const id = e.target.dataset.hide; if (!id) return;
+  await fetch("/api/hide", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({id})}); load();
+});
+$("#filters").addEventListener("click", e => {
+  const c = e.target.closest(".chip"); if (!c) return;
+  const f = c.dataset.f;
+  if (f === "src") { F.src = c.dataset.v; document.querySelectorAll('[data-f="src"]').forEach(x => x.classList.toggle("on", x === c)); }
+  else if (f === "low") { F.low = !F.low; c.classList.toggle("on", F.low); }
+  else if (f === "lots") { F.lots = !F.lots; c.classList.toggle("on", F.lots); }
+  else if (f === "sort") { F.sort = F.sort === "price" ? "new" : "price"; c.classList.toggle("on", F.sort === "price"); }
+  render();
+});
+// Beim Verlassen der Seite gelten Treffer als gesehen
+document.addEventListener("visibilitychange", () => { if (document.hidden) fetch("/api/viewed", {method:"POST"}); });
+if ("Notification" in window && Notification.permission === "default") {
+  document.body.addEventListener("click", () => Notification.requestPermission(), {once:true});
+}
+load(); setInterval(load, 10000);
+</script>
+</body>
+</html>

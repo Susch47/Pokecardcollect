@@ -1,0 +1,27 @@
+# Dunkelnacht-Radar – Konfiguration
+
+interval_minutes: 10        # Abstand zwischen Scans (nicht unter 5 setzen)
+eur_chf: 0.94               # Umrechnung für Vergleich Kleinanzeigen (EUR) ↔ tutti (CHF)
+stale_hours: 6              # Anzeige gilt als "nicht mehr gesehen", wenn so lange nicht mehr im Suchergebnis
+keep_days: 21               # ältere Treffer ausblenden
+
+# Breite Set-Suchen: finden alle Dunkelnacht-Anzeigen, die Karten werden dann erkannt
+broad_queries:
+  - dunkelnacht pokemon
+  - pitch black pokemon
+  - pokemon me05
+
+# Zusätzlich gezielte Suchen pro fehlender Karte ("Name Nummer"), rotierend
+targeted_per_cycle: 6       # pro Scan so viele Einzelkarten-Suchen
+targeted_rarities: [RR, H, IR, UR, SIR, MHR]   # Common/Uncommon nur über die breiten Suchen
+
+sources:
+  kleinanzeigen:
+    enabled: true
+    pages: 2
+    delay: [4, 9]           # Sekunden Pause zwischen Anfragen
+  tutti:
+    enabled: true
+    delay: 2.0
+
+tcgdex_set_id: me05         # für deutsche Namen + Cardmarket-Preise (optional)

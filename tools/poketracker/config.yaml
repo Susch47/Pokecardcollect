@@ -1,0 +1,59 @@
+# Pokémon Deal-Tracker – Konfiguration
+#
+# Karten-IDs findest du mit:   python -m poketracker find Glurak
+# Preis prüfen mit:             python -m poketracker price sv03.5-199
+# Die IDs unten sind Startbeispiele – bitte einmal mit "price" gegenprüfen.
+
+pages: 2                 # Ergebnisseiten pro Suchbegriff (je ~25 Anzeigen)
+request_delay: [4, 9]    # Sekunden Pause zwischen Anfragen (zufällig) – nicht senken
+
+settings:
+  sell_fee_pct: 0.10     # Gebühren beim Weiterverkauf (eBay/Cardmarket + Zahlung), konservativ
+  ship_in_default: 5.0   # angenommener Versand beim Kauf, wenn die Anzeige nichts sagt
+  ship_out: 4.0          # dein Versand beim Weiterverkauf
+  min_profit_eur: 15     # darunter kein DEAL
+  min_margin_pct: 0.20   # min. 20 % Marge auf den Einkauf
+  max_buy_pct: 0.75      # max. Angebot = 75 % vom Marktwert
+  too_cheap_pct: 0.35    # unter 35 % vom Marktwert → Scam/Fake-Verdacht
+  max_risk_for_deal: 40  # Risiko-Score 0–100
+
+watchlist:
+  - name: Glurak-ex SIR 199/165 (151)
+    tcgdex_id: sv03.5-199
+    queries: ["glurak 199/165", "charizard 199/165", "glurak ex 151 sir"]
+    must_match: ["199"]
+    any_of: ["glurak", "charizard"]
+    price_min: 40
+
+  - name: Nachtara-ex SIR 161/131 (Prismatische Entwicklungen)
+    tcgdex_id: sv08.5-161
+    queries: ["nachtara 161/131", "umbreon 161/131"]
+    must_match: ["161"]
+    any_of: ["nachtara", "umbreon"]
+    price_min: 150
+
+  - name: Nachtara VMAX Alt Art 215/203 (Drachenwandel)
+    tcgdex_id: swsh7-215
+    queries: ["nachtara vmax 215", "umbreon vmax 215/203"]
+    must_match: ["215"]
+    any_of: ["nachtara", "umbreon"]
+    price_min: 200
+
+  - name: Glurak Holo 4/102 Base Set (unlimited, raw)
+    tcgdex_id: base1-4
+    variant: holo
+    queries: ["glurak 4/102", "glurak base set holo"]
+    must_match: ["4/102"]
+    any_of: ["glurak", "charizard"]
+    # 1st Edition / Shadowless haben ein Vielfaches des Preises → separat tracken
+    exclude: ["1. edition", "1st edition", "erste edition", "shadowless", "edition 1"]
+    price_min: 80
+
+  # Beispiel für eine gegradete Karte mit eigenem Marktwert (TCGdex kennt nur raw):
+  # - name: Glurak-ex SIR 199/165 PSA 10
+  #   queries: ["glurak 199/165 psa 10"]
+  #   must_match: ["199"]
+  #   any_of: ["glurak", "charizard"]
+  #   condition: graded
+  #   min_grade: 10
+  #   market_override: 450

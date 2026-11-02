@@ -23,7 +23,7 @@ services:
       WORDPRESS_DB_NAME: wordpress
     volumes:
       - wp:/var/www/html
-      - ./pokecard-screener:/var/www/html/wp-content/plugins/pokecard-screener
+      - ./pokecard-radar:/var/www/html/wp-content/plugins/pokecard-radar
 
 volumes:
   db:
